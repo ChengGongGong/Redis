@@ -197,5 +197,7 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     不支持事务的，同时也会有一些命令行不支持；
     
     当主节点挂掉时，codis不会自动将某个从节点升级为主节点，当codis将某个slave升为master时，其他的slave并不会改变状态，仍然会从旧的master上同步数据，这就导致了主从数据不一致，
-    当出现主从切换时，需要管理员手动创建新的sync action来完成数据同步。
+    当出现主从切换时，需要管理员手动创建新的sync action来完成数据同步;
+    
+    Zookeeper/etcd存放数据路由表和codis-proxy节点的元信息,如果zk出现问题，则可能导致数据不一致的情况甚至影响对外提供的服务。
     
