@@ -138,15 +138,20 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     
     每个redis或memcached服务器保持一个长连接，这样在进行命令或数据传输时不需要再和后端的节点进行连接，加快传输效率；
     
-    支持多个节点，且支持多个节点池；
+    支持多个节点，且支持多个节点池，后端一台Redis挂掉后，Twemproxy能够自动摘除。恢复后，Twemproxy 能够自动识别、 恢复并重新加入到Redis组中重新使用；
     
     支持多节点的自动分片策略；
     
-    通常只有一台Twemproxy在工作，另外一台处于备机，当一台挂掉以后，vip自动漂移，备机接替工作。
+    通常只有一台Twemproxy在工作，另外一台处于备机，当一台挂掉以后，vip自动漂移，备机接替工作；
+    
+    单个TwemProxy的情况下，无论一个TwemProxy后面挂多少个Redis实例，其性能最多也只能达到单台Redis的性能；
+    
+    多台TwemProxy，客户端连接多台TwemProxy可在一定条件下提高性能。
     
     缺点：
     
-    无法平滑地扩容/缩容，扩容/缩容操作复杂；
+    无法平滑地扩容/缩容，如果要新增一台redis，TwemProxy需要重启才能生效，且数据不会自动重新Reblance，需要人工单独写脚本来实现
+    即redis节点发生数量变化时，TwemProxy算法相同的情况下，原来的数据必须重新处理分布，否则会存在找不到key值的情况；
     
     运维不友好，没有控制面板
     
