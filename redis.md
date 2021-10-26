@@ -122,3 +122,30 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     将buf数组的命令写入到socket.outputStream流中，即将命令发送给了Redis。
  
     2.3 RedisInputStream装饰了socket.inputStream流，将其读取到缓存中，完成多次读取，根据返回结果前缀的不同，使用不同的方法解析流的信息。
+ ## 5. 基于代理的redis分片
+ ### 5.1 简介
+    通常是在客户端和redis服务器直接启动一个代理服务proxy，客户端通过proxy与redis服务器进行交互，客户端不清楚proxy后方的redis服务器架构部署，
+    redis服务的集群分片、架构变化都是由代理服务proxy来维护的。场景的proxy代理服务有twemproxy、codis等
+    
+    优点：
+      可以解决客户端的redis分片的问题，例如客户端服务规模较大时，分片在客户端增加运维难度；后期redis扩容，需要修改客户端的配置，甚至重启客户端。
+    缺点：
+      由于中间多了一层代理转发，会造成一定程度上的性能下降，并且需要使用keepalived等保障proxy服务的高可用性
+### 5.2 twemproxy简介
+具体见：https://github.com/twitter/twemproxy/
+    一个redis和memcached的轻量级分布式代理，
+    每个redis或memcached服务器保持一个长连接，这样在进行命令或数据传输时不需要再和后端的节点进行连接，加快传输效率；
+    支持多个节点，且支持多个节点池；
+    支持多节点的自动分片策略；
+    通常只有一台Twemproxy在工作，另外一台处于备机，当一台挂掉以后，vip自动漂移，备机接替工作。
+    
+    5.2.1 内存管理机制-零拷贝
+    
+    twemproxy通过mbuf结构管理内存，每个mbuf块的默认大小为16K，twemproxy的并发数与mbuf块的大小之间存在均衡关系。
+    
+    内存结构是可以复用的，使用重用池管理mbuf的内存，一旦分配了mbuf，它就不会被释放，而只是重新进入重用池，请求进入和响应输出的所有内存都在mbuf中进行分配，mbuf启用零拷贝，因为客户端接收请     求使用到的内存结构，后端服务器可以复用。同样，从服务器端接收响应时使用的mbuf，也可在客户端复用；
+
+    内存池（mbuf）核心主要在nc_mbuf.ch中，所有mbuf几乎以单向链表的形式存储的
+### 5.3 Codis简介
+详情：https://github.com/CodisLabs/codis/blob/master/doc/tutorial_zh.md
+ 
