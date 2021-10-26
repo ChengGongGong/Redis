@@ -132,12 +132,24 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     缺点：
       由于中间多了一层代理转发，会造成一定程度上的性能下降，并且需要使用keepalived等保障proxy服务的高可用性
 ### 5.2 twemproxy简介
-具体见：https://github.com/twitter/twemproxy/
-    一个redis和memcached的轻量级分布式代理，
+    具体见：https://github.com/twitter/twemproxy/
+
+    一个redis和memcached的轻量级分布式代理；
+    
     每个redis或memcached服务器保持一个长连接，这样在进行命令或数据传输时不需要再和后端的节点进行连接，加快传输效率；
+    
     支持多个节点，且支持多个节点池；
+    
     支持多节点的自动分片策略；
+    
     通常只有一台Twemproxy在工作，另外一台处于备机，当一台挂掉以后，vip自动漂移，备机接替工作。
+    
+    缺点：
+    
+    无法平滑地扩容/缩容，扩容/缩容操作复杂；
+    
+    运维不友好，没有控制面板
+    
     
     5.2.1 内存管理机制-零拷贝
     
@@ -148,4 +160,37 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     内存池（mbuf）核心主要在nc_mbuf.ch中，所有mbuf几乎以单向链表的形式存储的
 ### 5.3 Codis简介
 详情：https://github.com/CodisLabs/codis/blob/master/doc/tutorial_zh.md
+
+    组件介绍：
+    Codis Proxy:对外提供redis服务，除一些不支持的命令，和原生的redis无区别；
+    
+    Codis Dashboard：集群管理工具，支持集群的添加删除以及数据迁移操作，对于一个Codis集群，Dashboard最多部署一个；
+    
+    Codis Admin：集群管理的命令行工具；
+    
+    Codis FE：集群管理界面，多个Codis集群可以共用一个Codis FE，通过配置文件管理后端的codis-dashboard；
+    
+    Storage：集群提供外部存储，目前支持ZooKeeper、Etcd、Fs三种。；
+    
+    Codis Server：基于3.2.8分支开发，增加额外的数据结构，用来支持slot有关的操作及数据迁移指令。
  
+    分片原理：
+    
+    使用预分片的技术来实现数据分片，默认分为1024个slot（0-1023）。Codis在接收到命令时，先对key进行crc32运算，然后再对1024取余，得到的结果就是对应的slot。
+    
+    此外，这个槽是可以配置，可以设置成 2048 或者是4096个。
+    
+    槽位与codis实例的关系维护在节点的内存中，各个节点之间的槽位信息通过zooKeeper监控同步。
+    
+    扩容操作：
+    
+    在扩容时，Codis提供了SLOTSSCAN指令，这个指令可以扫描指定的slot上的所有key，然后对每个key进行迁移，将这些key迁移到新的Redis的节点中。
+    在迁移过程中，如果有key打进将要迁移或者正在迁移的旧槽位的时候，将这个key强制迁移到新的Redis节点中，然后再告诉Codis,下次如果有新的key的打在这个槽位中的话，那么转发到新的节点。
+    
+    缺点：
+    
+    不支持事务的，同时也会有一些命令行不支持；
+    
+    当主节点挂掉时，codis不会自动将某个从节点升级为主节点，当codis将某个slave升为master时，其他的slave并不会改变状态，仍然会从旧的master上同步数据，这就导致了主从数据不一致，
+    当出现主从切换时，需要管理员手动创建新的sync action来完成数据同步。
+    
