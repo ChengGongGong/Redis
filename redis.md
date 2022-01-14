@@ -37,6 +37,11 @@ Sentinel模式： 一般包括3个sentinel节点，1个Master节点，1个Slave�
 
 Sentinel节点，用于监控Master和Slave的运行状态，并在Master节点down机的情况下，从slave中选择新的Master，并修改其他的Slave的Master
 
+对于每个被Sentinel监视的主服务器来说，Sentinel会创建两个连向主服务器的异步(需要与多个实例创建多个网络连接)网络连接：
+  1. 命令连接：专门用于向主服务器发送命令，并接收命令回复；
+  2. 订阅连接：专门用于订阅主服务器的_sentinel_:hello频道，因为redis目前的发布与订阅功能中被发送的信息不会保存在redis服务器里面，为了不丢失该_sentinel_:hello频道的任何信息，
+      必须使用一个订阅连接来接收该频繁的信息
+
 主观下线：服务器在给定的毫秒数之内,没有返回 Sentinel 发送的 PING 命令的回复,或者返回一个错误,那么 Sentinel 将这个服务器标记为主观下线;
 
 客观下线：多个Sentinel 实例在对同一个服务器做出下线判断，并且通过 SENTINEL is-master-down-by-addr 命令互相交流之后,得出的服务器下线判断(足够多的哨兵节点数量);
