@@ -52,7 +52,9 @@ Sentinel节点，用于监控Master和Slave的运行状态，并在Master节点d
   1. 每个 Sentinel 以每秒钟一次的频率向它所知的主服务器、从服务器以及其他 Sentinel 实例发送一个 PING 命令;
   
   2. 在一般情况下， 每个 Sentinel 会以每 10 秒一次的频率向它已知的所有主服务器和从服务器发送 INFO 命令，
-    当一个主服务器被 Sentinel 标记为客观下线时， Sentinel 向下线主服务器的所有从服务器发送 INFO 命令的频率会从 10 秒一次改为每秒一次
+    当一个主服务器被 Sentinel 标记为客观下线时， Sentinel 向下线主服务器的所有从服务器发送 INFO 命令的频率会从 10 秒一次改为每秒一次；
+    
+  3. 默认情况下，Sentinel会以每两秒一次的频率，通过命令连接向所有被监视的主服务器和从服务器的_sentinel_:hello频道发送信息
 ### 3.2 JedisSentinelPool简介
 JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) -> redis.clients.jedis.JedisSentinelPool#initPool
 
