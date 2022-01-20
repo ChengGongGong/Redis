@@ -211,6 +211,7 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
    ## 6. redis数据结构
    
    TYPE命令：返回的是数据库键对应的值对象的类型，而不是键对象的类型
+   
    OBJECT ENCODING命令：记录的是对象所使用的编码，即这个对象使用了什么数据结构作为对象的底层实现
    
    1. 字符串对象：编码可以是int、raw、embstr
