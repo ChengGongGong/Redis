@@ -93,6 +93,8 @@ JedisSentinelPool -> redis.clients.jedis.JedisSentinelPool#initSentinels(1-4) ->
     3.1 如果键值不包含{,则计算键的哈希值
     
     3.2 如果不是直接计算键的哈希，只有在第一个 { 和它右边第一个 } 之间的内容会被用来计算哈希值，如果两个字符之间没有任何字符，则计算整个键的哈希值。
+    
+  4. 常见的数据分片算法：范围分片、哈希分片、一致性哈希算法和虚拟哈希槽等
 ### 4.2 JedisCluster简介
   1. 初始化：redis.clients.jedis.JedisClusterConnectionHandler#initializeSlotsCache
     
